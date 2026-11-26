@@ -1,58 +1,85 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SINAR — Sistem Informasi Inventaris Perlengkapan Studio
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**SINAR** adalah aplikasi web dan layanan RESTful API berbasis **Laravel** serta **MySQL/MariaDB** untuk mengelola inventaris barang perlengkapan studio (kamera, lensa, *lighting*, audio, *tripod*, dan aksesori pendukung) serta mencatat riwayat mutasi stok antar-ruang produksi. Proyek ini dikembangkan untuk memenuhi **Milestone 1 (UTS)** pada mata kuliah **Pengembangan Web**.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tim Pengembang (5 Anggota)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| No | Nama Lengkap | NIM | Peran | Tanggung Jawab Utama |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | **Najla Salsabila Ridwan** | `SI2512004` | Project Coordinator & Documentation Lead (PIC) | Manajemen repositori GitHub & rilis tag `uts-v1.0`, penyusunan proposal, `README.md`, dokumen kebutuhan/ERD, logbook kontribusi, catatan AI, serta pengumpulan LMS. |
+| 2 | **Nurianti Sine** | `SI2512010` | Backend Developer — Autentikasi & Master Data | Integrasi login/logout, pengaturan hak akses peran (`admin` & `petugas`), validasi input, serta pengelolaan kategori dan lokasi/ruang studio. |
+| 3 | **Muh. Akbar Sapar** | `SI2512001` | Backend Developer — Modul Barang & Mutasi Stok | Pengelolaan katalog perlengkapan studio, logika pencatatan mutasi stok (`masuk`, `keluar`, `pindah`), validasi kecukupan stok, dan transaksi database atomik. |
+| 4 | **Marwah Akhiratul** | `SI2512008` | Backend & API QA — Pemasok & Pengujian API | Pengelolaan data pemasok/vendor, fitur riwayat mutasi & filter stok menipis, serta pengujian menyeluruh seluruh *endpoint* API melalui Postman. |
+| 5 | **Muh. Farid Alfarizi H.** | `SI2512002` | Database & ORM Lead | Perancangan ERD, struktur basis data 5 tabel inti (*migration*), pengisian data uji sintetis (*seeder*), dan relasi Eloquent ORM. |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Ruang Lingkup & Fitur Utama (Milestone 1 — UTS)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. **Autentikasi & Pembatasan Hak Akses (RBAC):**
+   * Endpoint `login` dan `logout` dengan verifikasi password ter-hash.
+   * Dua peran pengguna: **`admin`** (akses penuh data master dan transaksi) dan **`petugas`** (akses baca katalog/lokasi dan pencatatan mutasi harian).
+2. **Manajemen Data Master (CRUD):**
+   * **Kategori Perlengkapan (`categories`):** Pengelompokan alat studio (Kamera, Lensa, Lighting, Audio, Aksesori).
+   * **Lokasi / Ruang Studio (`locations`):** Titik penyimpanan alat (Gudang Utama, Studio Foto A, Studio Podcast/Audio).
+   * **Pemasok / Vendor (`suppliers`):** Daftar penyedia perlengkapan studio.
+   * **Perlengkapan Studio (`items`):** Katalog barang lengkap dengan kode SKU, jumlah stok saat ini, batas stok minimum, dan kondisi alat.
+3. **Transaksi Mutasi Stok (`stock_mutations`) & Aturan Bisnis:**
+   * Mendukung tiga jenis mutasi: **`masuk`**, **`keluar`**, dan **`pindah`** ruangan.
+   * **Validasi Kecukupan Stok:** Mutasi `keluar` dan `pindah` otomatis ditolak (`422 Unprocessable Entity`) apabila jumlah melebihi stok tersedia.
+   * **Transaksi Atomik (`DB::transaction`):** Setiap pencatatan mutasi otomatis memperbarui jumlah stok atau lokasi aktif barang secara konsisten.
+4. **Filter & Pelacakan Inventaris:**
+   * Filter daftar perlengkapan dengan stok menipis (`stock <= minimum_stock`) melalui parameter `?low_stock=1`.
+   * Pelacakan riwayat mutasi lengkap dengan informasi barang, lokasi asal/tujuan, pemasok, dan operator pemroses.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Struktur Basis Data (5 Tabel Bisnis Utama)
 
-## Agentic Development
+Selain tabel bawaan `users` (dengan penambahan kolom `role`), sistem menggunakan 5 tabel bisnis yang saling berelasi:
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+* **`categories`**: `id`, `code`, `name`, `description`
+* **`locations`**: `id`, `code`, `name`, `floor_or_building`
+* **`suppliers`**: `id`, `name`, `contact_person`, `phone`, `address`
+* **`items`**: `id`, `category_id` (FK), `location_id` (FK), `sku`, `name`, `unit`, `stock`, `minimum_stock`, `condition`
+* **`stock_mutations`**: `id`, `reference_no`, `item_id` (FK), `user_id` (FK), `supplier_id` (FK nullable), `from_location_id` (FK nullable), `to_location_id` (FK nullable), `type`, `quantity`, `mutation_date`, `notes`
 
-```bash
-composer require laravel/boost --dev
+---
 
-php artisan boost:install
-```
+## Daftar Endpoint RESTful API
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+| Method | Endpoint | Deskripsi | Hak Akses |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/login` | Autentikasi masuk pengguna | Publik |
+| `POST` | `/api/logout` | Keluar dari sesi pengguna | Admin & Petugas |
+| `GET` | `/api/categories` | Menampilkan daftar kategori perlengkapan | Admin & Petugas |
+| `POST` | `/api/categories` | Menambahkan kategori baru | Admin |
+| `PUT` | `/api/categories/{id}` | Memperbarui data kategori | Admin |
+| `DELETE` | `/api/categories/{id}` | Menghapus kategori | Admin |
+| `GET` | `/api/locations` | Menampilkan daftar lokasi/ruang studio | Admin & Petugas |
+| `POST` | `/api/locations` | Menambahkan lokasi baru | Admin |
+| `PUT` | `/api/locations/{id}` | Memperbarui data lokasi | Admin |
+| `DELETE` | `/api/locations/{id}` | Menghapus lokasi | Admin |
+| `GET` | `/api/suppliers` | Menampilkan daftar pemasok/vendor | Admin & Petugas |
+| `POST` | `/api/suppliers` | Menambahkan pemasok baru | Admin |
+| `PUT` | `/api/suppliers/{id}` | Memperbarui data pemasok | Admin |
+| `DELETE` | `/api/suppliers/{id}` | Menghapus pemasok | Admin |
+| `GET` | `/api/items` | Daftar perlengkapan studio (mendukung filter `?low_stock=1`) | Admin & Petugas |
+| `POST` | `/api/items` | Menambahkan perlengkapan studio baru | Admin |
+| `GET` | `/api/items/{id}` | Detail perlengkapan studio beserta riwayat mutasinya | Admin & Petugas |
+| `PUT` | `/api/items/{id}` | Memperbarui data perlengkapan studio | Admin |
+| `DELETE` | `/api/items/{id}` | Menghapus data perlengkapan studio | Admin |
+| `GET` | `/api/mutations` | Menampilkan riwayat transaksi mutasi stok | Admin & Petugas |
+| `POST` | `/api/mutations` | Mencatat transaksi mutasi baru (`masuk`, `keluar`, `pindah`) | Admin & Petugas |
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Teknologi yang Digunakan
 
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+* **Back-End Framework:** Laravel (PHP)
+* **ORM:** Eloquent ORM
+* **Basis Data:** MySQL / MariaDB
+* **Pengujian API:** Postman Collection
+* **Version Control:** Git & GitHub (Single Branch Workflow: `main`)
